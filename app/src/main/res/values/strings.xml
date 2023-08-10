@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">FinalProject</string>
+    <string-array name="currency_array">
+        <item>CAD</item>
+        <item>USD</item>
+        <item>EUR</item>
+        <item>JPY</item>
+    </string-array>
 </resources>
