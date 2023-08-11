@@ -15,6 +15,11 @@ public class MainActivity extends AppCompatActivity {
         ActivityMainBinding binding = ActivityMainBinding.inflate( getLayoutInflater());
         setContentView(binding.getRoot());
 
+        binding.currencyConverterButton.setOnClickListener(clk -> {
+            Intent c = new Intent(this, CurrencyActivity.class);
+            startActivity(c);
+        });
+
         binding.TriviaGenerator.setOnClickListener(clk ->{
             Intent t = new Intent(this,TriviaActivity.class);
             startActivity(t);
@@ -30,9 +35,6 @@ public class MainActivity extends AppCompatActivity {
             startActivity(b);
         });
 
-        binding.CurrencyConverter.setOnClickListener(clk ->{
-            Intent c = new Intent(this,CurrencyActivity.class);
-            startActivity(c);
-        });
+
     }
 }

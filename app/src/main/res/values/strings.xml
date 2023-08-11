@@ -1,9 +1,18 @@
 <resources>
     <string name="app_name">FinalProject</string>
-    <string-array name="currency_array">
-        <item>CAD</item>
-        <item>USD</item>
-        <item>EUR</item>
-        <item>JPY</item>
-    </string-array>
+    <string name="save_this_conversion">Save this conversion</string>
+    <string name="show_saved_query">Show saved conversions</string>
+    <string name="instructions">Instructions</string>
+    <string name="convert">Convert</string>
+    <string name="amount">Amount</string>
+    <string name="currency">Currency</string>
+    <string name="enter_amount">Enter the Amount:</string>
+    <string name="welcome">Welcome to Currency Converter</string>
+    <string name="enter_currency">Enter Currency</string>
+    <string name="instruction_text">"Here are instructions on how to use the app:\n\n"
+                    "1. Enter the input currency, output currency, and input amount.\n"
+                    "2. Click the Convert button to get the converted amount.\n"
+                    "3. The conversion will be saved to the database.\n"
+                    "4. You can view saved conversions in the Recycler view.\n"
+                    "5. Use the options menu to access different features."</string>
 </resources>
