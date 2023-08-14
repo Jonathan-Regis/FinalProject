@@ -16,7 +16,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         binding.currencyConverterButton.setOnClickListener(clk -> {
-            Intent c = new Intent(this, CurrencyActivity.class);
+            Intent c = new Intent(this, ConverterActivity.class);
             startActivity(c);
         });
 

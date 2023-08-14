@@ -19,6 +19,7 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.example.finalproject.databinding.ActivityConverterBinding;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -31,99 +32,99 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 
-/**
- * This class represents the main activity of the currency converter app.
- * It allows users to convert currency values and view their conversion history.
- */
+
 public class ConverterActivity extends AppCompatActivity {
 
 
-    protected RequestQueue queue = null;
-    CurrencyConverterDAO cDAO;
+    protected RequestQueue rQueue = null;
+    CurrencyConverterDAO ccDAO;
     ActivityConverterBinding binding;
     SharedPreferences prefs;
-    EditText inputAmount;
-    EditText inputCurrency;
-    EditText outputCurrency;
+    EditText beforeAmount;
+
+    EditText beforeCurrency;
+
+    EditText convertedCurrency;
+
 
     /**
-     * Called when the activity is first created.
-     * Initializes the UI components, handles button clicks, and performs currency conversion.
+     * Loads up the currency converter when the app is ran
+     * @param savedInstanceState If the activity is being re-initialized after
+     *     previously being shut down then this Bundle contains the data it most
+     *     recently supplied in {@link #onSaveInstanceState}.  <b><i>Note: Otherwise it is null.</i></b>
      *
-     * @param savedInstanceState A Bundle containing the activity's previously saved state.
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        ConversionsDatabase db = Room.databaseBuilder(getApplicationContext(), ConversionsDatabase.class, "Currency Conversions").build();
+        ccDAO = db.ccDAO();
+
         binding = ActivityConverterBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        Toolbar toolbar = (Toolbar) findViewById(R.id.myToolbar);
+        Toolbar toolbar = findViewById(R.id.myToolbar);
         setSupportActionBar(toolbar);
         toolbar.showOverflowMenu();
 
         prefs = getSharedPreferences("MyData", Context.MODE_PRIVATE);
-        inputAmount = findViewById(R.id.inputAmount);
-        inputCurrency = findViewById(R.id.inputCurrency);
-        outputCurrency = findViewById(R.id.outputCurrency);
-        String savedInputCurrency = prefs.getString("inputCurrency", "");
-        String savedOutputCurrency = prefs.getString("outputCurrency", "");
-        String savedInputAmount = prefs.getString("inputAmount", "");
+
+        beforeAmount = findViewById(R.id.beforeAmount);
+        beforeCurrency = findViewById(R.id.beforeCurrency);
+        convertedCurrency = findViewById(R.id.convertedCurrency);
+
+        String savedBeforeCurrency = prefs.getString("beforeCurrency", "");//saves previous written data loaded with a key
+        String savedBeforeAmount = prefs.getString("beforeAmount", "");//saves previous written data loaded with a key
+        String savedConvertedCurrency = prefs.getString("convertedCurrency", "");//saves previous written data loaded with a key
+
+        beforeCurrency.setText(savedBeforeCurrency);//sets previous written data
+        beforeAmount.setText(savedBeforeAmount);//sets previous written data
+        convertedCurrency.setText(savedConvertedCurrency);//sets previous written data
+
+        rQueue = Volley.newRequestQueue(this);
 
 
-        inputAmount.setText(savedInputAmount);
-        inputCurrency.setText(savedInputCurrency);
-        outputCurrency.setText(savedOutputCurrency);
-
-
-        queue = Volley.newRequestQueue(this);
-        /**This is the Currency Conversion database*/
-        ConversionsDatabase db = Room.databaseBuilder(getApplicationContext(), ConversionsDatabase.class, "database-name").build();
-        cDAO = db.ccDAO();
-
-
-        /**Inside this onClickListener is all for the API url and the convert button functions*/
+        /**
+         * Checks for any impurities in the edit Texts and displays Toast messages on the result
+         */
         binding.convertButton.setOnClickListener(clk -> {
-            String newInputCurrency = inputCurrency.getText().toString();
-            String newInputAmount = inputAmount.getText().toString();
-            String newOutputCurrency = outputCurrency.getText().toString();
-            saveConversionDataToSharedPreferences(newInputCurrency, newOutputCurrency, newInputAmount);
-            if (newInputAmount.isEmpty()) {
-                // Handle empty inputAmount, for example, show a toast message
-                Toast.makeText(this, "Please enter an amount to convert", Toast.LENGTH_SHORT).show();
-                return; // Exit the onClickListener
-            } else if (newInputCurrency.isEmpty() || newInputCurrency.length() != 3) {
-                Toast.makeText(this, "Please enter a 3 letter currency", Toast.LENGTH_SHORT).show();
+            String inputBeforeAmount = beforeAmount.getText().toString();
+            String inputBeforeCurrency = beforeCurrency.getText().toString().toUpperCase();
+            String inputConvertedCurrency = convertedCurrency.getText().toString().toUpperCase();
+            saveConversionData(inputBeforeAmount, inputBeforeCurrency, inputConvertedCurrency);
+            if (inputBeforeAmount.isEmpty()) {
+                Toast.makeText(this, "Please enter the amount of money to convert", Toast.LENGTH_LONG).show();
                 return;
-            } else if (newOutputCurrency.isEmpty() || newOutputCurrency.length() != 3) {
-                Toast.makeText(this, "Please enter a 3 letter currency", Toast.LENGTH_SHORT).show();
+            } else if (inputBeforeCurrency.isEmpty() || inputBeforeCurrency.length() != 3) {
+                Toast.makeText(this, "Please enter a 3 letter currency to convert from", Toast.LENGTH_SHORT).show();
+                return;
+            } else if (inputConvertedCurrency.isEmpty() || inputConvertedCurrency.length() != 3) {
+                Toast.makeText(this, "Please enter a 3 letter currency to convert to", Toast.LENGTH_SHORT).show();
                 return;
             }
 
+            Toast.makeText(this, "Successfully Converted", Toast.LENGTH_LONG).show();
+            String beforeAmount = binding.beforeAmount.getText().toString();
+            String beforeCurrency = binding.beforeCurrency.getText().toString().toUpperCase();
+            String convertedCurrency = binding.convertedCurrency.getText().toString().toUpperCase();
 
-            Toast.makeText(this, "Converted", Toast.LENGTH_LONG).show();
-//          String URL = "https://api.getgeoapi.com/v2/currency/convert?format=json&from=CAD&to=USD&amount=10&api_key=c1f37b28035f89328e61c24caefd20d99f97cdf0&format=json";
-            String inputCurrency = binding.inputCurrency.getText().toString().toUpperCase();
-            String outputCurrency = binding.outputCurrency.getText().toString().toUpperCase();
-            String inputAmount = binding.inputAmount.getText().toString();
-
-
+            //Strings the complete URL together for the conversions
             String URL = "https://api.getgeoapi.com/v2/currency/convert?format=json&from="
-                    + URLEncoder.encode(inputCurrency)
+                    + URLEncoder.encode(beforeCurrency)
                     + "&to="
-                    + URLEncoder.encode(outputCurrency)
+                    + URLEncoder.encode(convertedCurrency)
                     + "&amount="
-                    + URLEncoder.encode(inputAmount)
-                    + "&api_key=c1f37b28035f89328e61c24caefd20d99f97cdf0&format=json";
+                    + URLEncoder.encode(beforeAmount)
+                    + "&api_key=b3d39bafe1ea0783c3cd6d969913b632a390a463&format=json";
 
 
             JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, URL, null,
                     (response) -> {
                         try {
-                            JSONObject rates = response.getJSONObject("rates");
-                            JSONObject currency = rates.getJSONObject(outputCurrency);
-                            String ratesAmount = currency.getString("rate_for_amount");
-                            binding.outputAmount.setText(ratesAmount);
+                            JSONObject convRate = response.getJSONObject("rates");
+                            JSONObject currency = convRate.getJSONObject(convertedCurrency);
+                            String convRateAmount = currency.getString("rate_for_amount");
+                            binding.convertedAmount.setText(convRateAmount);
 
                         } catch (JSONException e) {
                             throw new RuntimeException(e);
@@ -132,52 +133,81 @@ public class ConverterActivity extends AppCompatActivity {
                         }
                     },
                     (error) -> {
-                        int test = 0;
                     });
-            queue.add(request);
+            rQueue.add(request);
         });
     }
+
+
     /**
-     * Returns the current date and time in a formatted string.
-     *
-     * @return A formatted string representing the current date and time.
+     *  Saves the data of the conversion
+     * @param beforeCurrency represents old currency
+     * @param convertedCurrency represents new conversion currency
+     * @param beforeAmount represents the amount to convert
      */
-    private String getCurrentTime() {
-        SimpleDateFormat sdf = new SimpleDateFormat("EEEE, dd-MMM-yyyy \nhh:mm:ss a");
-        return sdf.format(new Date());
+    private void saveConversionData(String beforeCurrency, String convertedCurrency, String beforeAmount) {
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString("beforeCurrency", beforeCurrency);
+        editor.putString("convertedCurrency", convertedCurrency);
+        editor.putString("beforeAmount", beforeAmount);
+        editor.apply();
     }
+
     /**
-     * Creates the options menu in the app's toolbar.
+     * Shows the menu
+     * @param menu The options menu in which you place your items.
      *
-     * @param menu The menu to be populated.
-     * @return True if the menu was successfully created, false otherwise.
+     * @return
      */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
-        getMenuInflater().inflate(R.menu.my_menu_converter, menu);
+        getMenuInflater().inflate(R.menu.converter_menu, menu);
         return true;
     }
-    /**
-     * Handles the selection of items from the options menu.
-     *
-     * @param item The selected menu item.
-     * @return True if the menu item selection was handled, false otherwise.
-     */
+
+    private void saveCurrencyConversionToDatabase() {
+
+        String beforeAmount = binding.beforeAmount.getText().toString();
+        String convertedAmount = binding.convertedAmount.getText().toString();
+        String beforeCurrency = binding.beforeCurrency.getText().toString().toUpperCase();
+        String convertedCurrency = binding.convertedCurrency.getText().toString().toUpperCase();
+
+        if("Amount".equals(convertedAmount)){
+            Toast.makeText(this, "Cannot save unconverted currencies", Toast.LENGTH_SHORT).show();
+            return;
+        } else {
+            CurrencyConverter conversion = new CurrencyConverter();
+            conversion.beforeAmount = beforeAmount;
+            conversion.convertedAmount = convertedAmount;
+            conversion.beforeCurrency = beforeCurrency;
+            conversion.convertedCurrency = convertedCurrency;
+
+            Executor thread = Executors.newSingleThreadExecutor();
+            thread.execute(() -> {
+                ccDAO.insertConversion(conversion);
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "Currency conversion is saved to the database", Toast.LENGTH_LONG).show();
+                });
+            });
+        }
+    }
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == R.id.item1) {
+        if (item.getItemId() == R.id.box1) {
             saveCurrencyConversionToDatabase();
-        } else if (item.getItemId() == R.id.item2) {
+
+        } else if (item.getItemId() == R.id.box2) {
             Intent conversionRecycler = new Intent(this, ConversionRecycler.class);
             startActivity(conversionRecycler);
             updateAllConversions();
-        } else if (item.getItemId() == R.id.item3) {
+
+        } else if (item.getItemId() == R.id.box3) {
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
             alertDialogBuilder.setTitle(getString(R.string.instructions));
             alertDialogBuilder.setMessage(getString(R.string.instruction_text));
 
-            alertDialogBuilder.setPositiveButton("Got It", (dialog, which) -> dialog.dismiss());
+            alertDialogBuilder.setPositiveButton("I understand", (dialog, which) -> dialog.dismiss());
 
             AlertDialog alertDialog = alertDialogBuilder.create();
             alertDialog.show();
@@ -185,78 +215,43 @@ public class ConverterActivity extends AppCompatActivity {
         }
         return true;
     }
+
     /**
-     * Saves a currency conversion record to the database.
-     */
-    private void saveCurrencyConversionToDatabase() {
-
-        String inputAmount = binding.inputAmount.getText().toString();
-        String outputAmount = binding.outputAmount.getText().toString();
-        String inputCurrency = binding.inputCurrency.getText().toString().toUpperCase();
-        String outputCurrency = binding.outputCurrency.getText().toString().toUpperCase();
-        if("Amount".equals(outputAmount)){
-            Toast.makeText(this, "Cannot save unconverted currencies", Toast.LENGTH_SHORT).show();
-            return;
-        } else {
-
-
-            CurrencyConverter conversion = new CurrencyConverter();
-            conversion.inputAmount = inputAmount;
-            conversion.outputAmount = outputAmount;
-            conversion.inputCurrency = inputCurrency;
-            conversion.outputCurrency = outputCurrency;
-            conversion.timeExecuted = getCurrentTime();
-
-            Executor thread = Executors.newSingleThreadExecutor();
-            thread.execute(() -> {
-                cDAO.insertConversion(conversion);
-                runOnUiThread(() -> {
-                    Toast.makeText(this, "Currency conversion is saved to the database", Toast.LENGTH_LONG).show();
-                });
-            }); }
-    }
-    /**
-     * Saves conversion data to SharedPreferences for future use.
-     *
-     * @param inputCurrency  The input currency code.
-     * @param outputCurrency The output currency code.
-     * @param inputAmount    The input amount.
-     */
-    private void saveConversionDataToSharedPreferences(String inputCurrency, String outputCurrency, String inputAmount) {
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putString("inputCurrency", inputCurrency);
-        editor.putString("outputCurrency", outputCurrency);
-        editor.putString("inputAmount", inputAmount);
-        editor.apply();
-    }
-    /**
-     * Updates all currency conversions from the database using a separate thread.
+     * Updates a list of the conversions using an external API with a url and
      */
     private void updateAllConversions() {
         Thread thread = new Thread(() -> {
-            List<CurrencyConverter> conversionList = cDAO.getAllConversions();
+            List<CurrencyConverter> conversionList = ccDAO.getAllConversions();
 
-            String apiKey = "c1f37b28035f89328e61c24caefd20d99f97cdf0";
+            String apiKey = "b3d39bafe1ea0783c3cd6d969913b632a390a463&format=json";
             String baseUrl = "https://api.getgeoapi.com/v2/currency/convert";
 
             for (CurrencyConverter conversion : conversionList) {
-                String fromCurrency = URLEncoder.encode(conversion.getInputCurrency());
-                String toCurrency = URLEncoder.encode(conversion.getOutputCurrency());
-                String amount = URLEncoder.encode(conversion.getInputAmount());
+                String fromCurrency = URLEncoder.encode(conversion.getBeforeCurrency());
+                String toCurrency = URLEncoder.encode(conversion.getConvertedCurrency());
+                String amount = URLEncoder.encode(conversion.getBeforeAmount());
 
-                String URL = baseUrl + "?format=json&from=" + fromCurrency + "&to=" + toCurrency +
-                        "&amount=" + amount + "&api_key=" + apiKey;
+                //uses this URL for the external API
+                String URL = baseUrl
+                        + "?format=json&from="
+                        + fromCurrency
+                        + "&to="
+                        + toCurrency
+                        + "&amount="
+                        + amount +
+                        "&api_key=" + apiKey;
 
+                //Creates a request for the conversion data
                 JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, URL, null,
                         response -> {
                             try {
+                                //returnes the rates and amount
                                 JSONObject rates = response.getJSONObject("rates");
-                                JSONObject currency = rates.getJSONObject(conversion.getOutputCurrency());
+                                JSONObject currency = rates.getJSONObject(conversion.getConvertedCurrency());
                                 String ratesAmount = currency.getString("rate_for_amount");
 
-                                // Update UI on the main thread
                                 runOnUiThread(() -> {
-                                    binding.outputAmount.setText(ratesAmount);
+                                    binding.convertedAmount.setText(ratesAmount);
                                 });
 
                             } catch (JSONException e) {
@@ -264,21 +259,13 @@ public class ConverterActivity extends AppCompatActivity {
                             }
                         },
                         error -> {
-                            // Handle error if needed
                         });
-
-                queue.add(request);
+                rQueue.add(request);
             }
-
-            // Inform the user that the database has been updated
             runOnUiThread(() -> {
-                Toast.makeText(this, "Database has been updated", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Database has been updated", Toast.LENGTH_SHORT).show();
             });
         });
-
         thread.start();
     }
-
-
-
 }

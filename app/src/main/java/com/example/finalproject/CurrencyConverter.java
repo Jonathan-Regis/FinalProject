@@ -5,7 +5,7 @@ import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
 /**
- * Represents a currency conversion record stored in a database.
+ * Getters and Setters for all components and for the database
  */
 @Entity
 public class CurrencyConverter {
@@ -14,67 +14,81 @@ public class CurrencyConverter {
     @ColumnInfo(name = "id")
     public int id;
 
-    @ColumnInfo(name = "Input Currency")
-    public String inputCurrency;
+    @ColumnInfo(name = "oldCurrency")
+    public String beforeCurrency;
 
-    @ColumnInfo(name = "Input Amount")
-    public String inputAmount;
+    @ColumnInfo(name = "startAmount")
+    public String beforeAmount;
 
-    @ColumnInfo(name = "Output Currency")
-    public String outputCurrency;
+    @ColumnInfo(name = "newCurrency")
+    public String convertedCurrency;
 
-    @ColumnInfo(name = "Output Amount")
-    public String outputAmount;
+    @ColumnInfo(name = "newAmount")
+    public String convertedAmount;
 
-    @ColumnInfo(name = "Time Conversion Executed")
+    @ColumnInfo(name = "TimeExecuted")
     public String timeExecuted;
 
 
     public int getId() {
+
         return id;
     }
 
     public void setId(int id) {
+
         this.id = id;
     }
 
-    public String getInputCurrency() {
-        return inputCurrency;
+    public String getBeforeCurrency() {
+
+        return beforeCurrency;
     }
 
-    public void setInputCurrency(String inputCurrency) {
-        this.inputCurrency = inputCurrency;
+    public void setBeforeCurrency(String beforeCurrency) {
+
+        this.beforeCurrency = beforeCurrency;
     }
 
-    public String getInputAmount() {
-        return inputAmount;
+    public String getBeforeAmount() {
+
+        return beforeAmount;
     }
 
-    public void setInputAmount(String inputAmount) {
-        this.inputAmount = inputAmount;
+    public void setBeforeAmount(String beforeAmount)
+    {
+        this.beforeAmount = beforeAmount;
     }
 
-    public String getOutputCurrency() {
-        return outputCurrency;
+    public String getConvertedCurrency() {
+
+        return convertedCurrency;
     }
 
-    public void setOutputCurrency(String outputCurrency) {
-        this.outputCurrency = outputCurrency;
+    public void setConvertedCurrency(String convertedCurrency) {
+
+        this.convertedCurrency = convertedCurrency;
     }
 
-    public String getOutputAmount() {
-        return outputAmount;
+    public String getConvertedAmount() {
+
+        return convertedAmount;
     }
 
-    public void setOutputAmount(String outputAmount) {
-        this.outputAmount = outputAmount;
+    public void setConvertedAmount(String convertedAmount) {
+
+        this.convertedAmount = convertedAmount;
     }
 
-    public String getTimeExecuted() {
+    public String getTimeExecuted()
+    {
+
         return timeExecuted;
     }
 
-    public void setTimeExecuted(String timeExecuted) {
+    public void setTimeExecuted(String timeExecuted)
+    {
+
         this.timeExecuted = timeExecuted;
     }
 }

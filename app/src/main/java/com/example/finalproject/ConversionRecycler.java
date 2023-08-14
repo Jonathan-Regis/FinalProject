@@ -14,16 +14,13 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 
-
+/**
+ * This class displays a recycler of all the conversions
+ */
 public class ConversionRecycler extends AppCompatActivity {
 
     ActivityConversionRecyclerBinding binding;
-    CurrencyConverterDAO cDAO;
-
-
-
-
-
+    CurrencyConverterDAO ccDAO;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,16 +29,16 @@ public class ConversionRecycler extends AppCompatActivity {
         setContentView(binding.getRoot());
         RecyclerView recyclerView = findViewById(R.id.recyclerView);
 
-        ConversionsDatabase db = Room.databaseBuilder(getApplicationContext(), ConversionsDatabase.class, "database-name").build();
-        cDAO = db.ccDAO();
+        ConversionsDatabase db = Room.databaseBuilder(getApplicationContext(), ConversionsDatabase.class, "Currency Conversions").build();
+        ccDAO = db.ccDAO();
 
         Executor executor = Executors.newSingleThreadExecutor();
         executor.execute(()->{
-            List<CurrencyConverter> converterList = cDAO.getAllConversions();
+            List<CurrencyConverter> conversionList = ccDAO.getAllConversions();
 
 
             runOnUiThread(()->{
-                ConversionsRecyclerViewAdapter adapter = new ConversionsRecyclerViewAdapter(this, converterList, db);
+                ConversionsRecyclerViewAdapter adapter = new ConversionsRecyclerViewAdapter(this, conversionList, db);
                 recyclerView.setAdapter(adapter);
                 recyclerView.setLayoutManager(new LinearLayoutManager(this));
             });

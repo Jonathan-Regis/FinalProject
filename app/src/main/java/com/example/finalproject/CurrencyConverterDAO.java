@@ -10,6 +10,10 @@ import com.example.finalproject.CurrencyConverter;
 import java.util.List;
 
 
+/**
+ * This is an interface that will help to insert and delete the conversions as well as display
+ * the previous existing conversions
+ */
 @Dao
 public interface CurrencyConverterDAO {
     @Insert

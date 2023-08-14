@@ -21,41 +21,34 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+
 /**
- * RecyclerView adapter for displaying currency conversion records in a list.
+ * This class sets with the recycler and bind data with conversions to be displayed
  */
 public class ConversionsRecyclerViewAdapter extends RecyclerView.Adapter<ConversionsRecyclerViewAdapter.MyViewHolder> {
-    /**
-     * Context of the adapter.
-     */
     Context context;
-    /**
-     * List of currency converter objects.
-     */
-    List<CurrencyConverter> converterList;
-    /**
-     * Database instance.
-     */
-    ConversionsDatabase db;
-    /**
-     * CurrencyConverterDAO instance.
-     */
-    CurrencyConverterDAO cDAO;
 
-    /**
-     * Constructs an instance of the ConversionsRecyclerViewAdapter.
-     *
-     * @param context       The context of the adapter.
-     * @param converterList The list of currency converter objects.
-     * @param db            The database instance.
-     */
-    public ConversionsRecyclerViewAdapter(Context context, List<CurrencyConverter> converterList, ConversionsDatabase db) {
+    List<CurrencyConverter> conversionList;
+
+    ConversionsDatabase db;
+
+    CurrencyConverterDAO ccDAO;
+
+    public ConversionsRecyclerViewAdapter(Context context, List<CurrencyConverter> conversionList, ConversionsDatabase db) {
         this.context = context;
-        this.converterList = converterList;
+        this.conversionList = conversionList;
         this.db = db;
-        this.cDAO = db.ccDAO();
+        this.ccDAO = db.ccDAO();
     }
 
+    /**
+     * This method creates and returns new instances of an inflater and view
+     * @param parent The ViewGroup into which the new View will be added after it is bound to
+     *               an adapter position.
+     * @param viewType The view type of the new View.
+     *
+     * @return
+     */
     @NonNull
     @Override
     public ConversionsRecyclerViewAdapter.MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -64,42 +57,42 @@ public class ConversionsRecyclerViewAdapter extends RecyclerView.Adapter<Convers
         return new ConversionsRecyclerViewAdapter.MyViewHolder(view);
     }
 
+    /**
+     * This method gets the position of the values and what to display
+     * @param holder The ViewHolder which should be updated to represent the contents of the
+     *        item at the given position in the data set.
+     * @param position The position of the item within the adapter's data set.
+     */
     @Override
     public void onBindViewHolder(@NonNull ConversionsRecyclerViewAdapter.MyViewHolder holder, int position) {
-        holder.outputAmountDatabase.setText(converterList.get(position).outputAmount);
-        holder.inputAmountDatabase.setText(converterList.get(position).inputAmount);
-        holder.outputCurrencyDatabase.setText(converterList.get(position).outputCurrency);
-        holder.inputCurrencyDatabase.setText(converterList.get(position).inputCurrency);
+        holder.outputAmountDatabase.setText(conversionList.get(position).convertedAmount);
+        holder.inputAmountDatabase.setText(conversionList.get(position).beforeAmount);
+        holder.outputCurrencyDatabase.setText(conversionList.get(position).convertedCurrency);
+        holder.inputCurrencyDatabase.setText(conversionList.get(position).beforeCurrency);
 
     }
 
     @Override
     public int getItemCount() {
-        return converterList.size();
+        return conversionList.size();
     }
 
-    /**
-     * ViewHolder class for managing individual items in the RecyclerView.
-     */
     public class MyViewHolder extends RecyclerView.ViewHolder {
         TextView inputCurrencyDatabase;
         TextView outputCurrencyDatabase;
         TextView inputAmountDatabase;
         TextView outputAmountDatabase;
-        Button timeExecButton;
 
         /**
-         * Constructs a ViewHolder for managing individual items in the RecyclerView.
-         *
-         * @param itemView The view of the individual item.
+         * binds the ID of values to a database
+         * @param itemView creates a view
          */
         public MyViewHolder(@NonNull View itemView) {
             super(itemView);
-            inputCurrencyDatabase = itemView.findViewById(R.id.inputCurrencyDatabase);
-            outputCurrencyDatabase = itemView.findViewById(R.id.outputCurrencyDatabase);
-            inputAmountDatabase = itemView.findViewById(R.id.inputAmountDatabase);
-            outputAmountDatabase = itemView.findViewById(R.id.outputAmountDatabase);
-            timeExecButton = itemView.findViewById(R.id.timeExecButton);
+            inputCurrencyDatabase = itemView.findViewById(R.id.beforeCurrencyDB);
+            outputCurrencyDatabase = itemView.findViewById(R.id.convertedCurrencyDB);
+            inputAmountDatabase = itemView.findViewById(R.id.beforeAmountDB);
+            outputAmountDatabase = itemView.findViewById(R.id.convertedAmountDB);
 
 
             itemView.setOnClickListener(clk -> {
@@ -107,62 +100,46 @@ public class ConversionsRecyclerViewAdapter extends RecyclerView.Adapter<Convers
 
             });
 
-            timeExecButton.setOnClickListener(clk -> {
-                int position = getAdapterPosition();
-
-                if (position != RecyclerView.NO_POSITION) {
-
-                    CurrencyConverter cConverter = converterList.get(position);
-                    FragmentManager fMgr = ((AppCompatActivity) context).getSupportFragmentManager();
-                    ConversionTimeFragment frag = new ConversionTimeFragment(cConverter);
-
-
-                    FragmentTransaction tx = fMgr.beginTransaction();
-                    tx.replace(R.id.fragmentLocation, frag);
-                    tx.commit();
-
-                }
-
-            });
 
         }
+
         /**
-         * Deletes a conversion record from the database and updates the RecyclerView.
+         * This method will try to delete a conversion entry and allow you undo a delete for a duration after clicking yes
          */
         public void deleteConversion() {
             int position = getAdapterPosition();
 
             if (position != RecyclerView.NO_POSITION) {
-                CurrencyConverter removedConversion = converterList.get(position);
-                AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(context);
-                alertDialogBuilder.setTitle("Delete Entry");
-                alertDialogBuilder.setMessage("Are you sure you want to delete this entry?");
-                alertDialogBuilder.setPositiveButton("Delete", (dialog, which) -> {
+                CurrencyConverter removedConversion = conversionList.get(position);
+                AlertDialog.Builder deleteConversionBuilder = new AlertDialog.Builder(context);
+                deleteConversionBuilder.setTitle("Delete this conversion?");
+                deleteConversionBuilder.setMessage("Are you sure you want to delete this conversion entry?");
+                deleteConversionBuilder.setPositiveButton("Deleted entry", (dialog, which) -> {
 
                     Executor thread = Executors.newSingleThreadExecutor();
                     thread.execute(() -> {
-                        cDAO.deleteConversion(removedConversion);
+                        ccDAO.deleteConversion(removedConversion);
 
                         ((Activity) context).runOnUiThread(() -> {
-                            converterList.remove(position);
+                            conversionList.remove(position);
                             notifyItemRemoved(position);
 
-                            Snackbar.make(itemView, "Conversion deleted", Snackbar.LENGTH_LONG)
+                            Snackbar.make(itemView, "Conversion has been deleted", Snackbar.LENGTH_LONG)
                                     .setAction("Undo", v -> {
-                                        converterList.add(position, removedConversion);
+                                        conversionList.add(position, removedConversion);
                                         notifyItemInserted(position);
 
                                         Executor threadUndo = Executors.newSingleThreadExecutor();
                                         threadUndo.execute(() -> {
-                                            cDAO.insertConversion(removedConversion);
+                                            ccDAO.insertConversion(removedConversion);
                                         });
                                     }).show();
                         });
                     });
                 });
-                alertDialogBuilder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+                deleteConversionBuilder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
 
-                AlertDialog alertDialog = alertDialogBuilder.create();
+                AlertDialog alertDialog = deleteConversionBuilder.create();
                 alertDialog.show();
             }
         }
